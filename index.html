@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Склад и Заказы - Управление</title>
+<style>
+  /* Общие стили */
+  body {
+    margin: 0; padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f3f7;
+    color: #222;
+    min-height: 100vh;
+  }
+  header {
+    display: flex;
+    background-color: #3f51b5;
+    color: #fff;
+    padding: 12px 20px;
+    gap: 20px;
+    user-select: none;
+  }
+  header button {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-bottom: 3px solid transparent;
+    transition: border-color 0.3s ease;
+  }
+  header button.active {
+    border-color: #ffc107;
+    font-weight: 700;
+  }
+  main {
+    padding: 20px 30px 40px 30px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-weight: 700;
+    color: #3f51b5;
+  }
+
+  /* Формы */
+  form {
+    background: #fff;
+    padding: 15px 20px 20px 20px;
+    box-shadow: 0 4px 8px rgb(0 0 0 / 0.05);
+    border-radius: 8px;
+    margin-bottom: 30px;
+  }
+  form input, form select {
+    width: 100%;
+    padding: 9px 12px;
+    font-size: 14px;
+    margin-bottom: 15px;
+    border: 1.8px solid #ccc;
+    border-radius: 6px;
+    transition: border-color 0.25s ease;
+  }
+  form input:focus, form select:focus {
+    border-color: #3f51b5;
+    outline: none;
+  }
+  form label {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 6px;
+    display: block;
+  }
+  button, .btn {
+    background-color: #3f51b5;
+    color: white;
+    border: none;
+    padding: 11px 22px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+  }
+  button:hover, .btn:hover {
+    background-color: #303f9f;
+  }
+  button:disabled {
+    background-color: #a5a5a5;
+    cursor: not-allowed;
+  }
+
+  /* Таблицы */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    background: white;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.08);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  thead tr {
+    background: #3f51b5;
+    color: white;
+  }
+  th, td {
+    text-align: left;
+    padding: 14px 16px;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+    vertical-align: middle;
+  }
+  tbody tr:hover {
+    background-color: #f1f5ff;
+  }
+  tbody tr.empty-row td {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+  }
+  td.actions button {
+    background: #f44336;
+    padding: 6px 10px;
+    font-size: 13px;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+  td.actions button:hover {
+    background: #d32f2f;
+  }
+
+  /* Скрытие/показ секций */
+  section {
+    display: none;
+  }
+  section.active {
+    display: block;
+  }
+
+  /* Блок для товаров в заказе */
+  #orderItemsContainer > div {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 10px;
+    align-items: center;
+  }
+  #orderItemsContainer select {
+    flex-grow: 1;
+    max-width: 400px;
+    padding: 9px 12px;
+    font-size: 14px;
+    border: 1.8px solid #ccc;
+    border-radius: 6px;
+    transition: border-color 0.25s ease;
+  }
+  #orderItemsContainer select:focus {
+    border-color: #3f51b5;
+    outline: none;
+  }
+  #orderItemsContainer input[type=number] {
+    width: 90px;
+    padding: 8px 10px;
+    font-size: 14px;
+    border: 1.8px solid #ccc;
+    border-radius: 6px;
+    transition: border-color 0.25s ease;
+  }
+  #orderItemsContainer input[type=number]:focus {
+    border-color: #3f51b5;
+    outline: none;
+  }
+  #orderItemsContainer button.removeItemBtn {
+    background: #e91e63;
+    padding: 6px 14px;
+    font-weight: 700;
+    border-radius: 6px;
+    border: none;
+    color: white;
+    cursor: pointer;
+  }
+  #orderItemsContainer button.removeItemBtn:hover {
+    background: #b0003a;
+  }
+
+  /* Поиск */
+  .search-group {
+    max-width: 720px;
+    margin-bottom: 25px;
+    display: flex;
+    gap: 12px;
+  }
+  .search-group input {
+    flex-grow: 1;
+    padding: 10px 14px;
+    font-size: 15px;
+    border-radius: 6px;
+    border: 1.8px solid #ccc;
+    transition: border-color 0.25s ease;
+  }
+  .search-group input:focus {
+    border-color: #3f51b5;
+    outline: none;
+  }
+  .no-orders-msg {
+    font-style: italic;
+    color: #666;
+    margin-top: 10px;
+  }
+
+  /* Стиль для клиента, когда упаковано */
+  .order-client.packed {
+    background-color: #e0f7e9;
+    border-left: 5px solid #4caf50;
+  }
+  .order-client {
+    border-radius: 8px;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    box-shadow: 0 3px 6px rgb(0 0 0 / 0.1);
+    transition: background-color 0.3s ease;
+  }
+  .order-client-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 10px;
+  }
+  .order-client-header > div {
+    flex-grow: 1;
+  }
+  .order-client-header label {
+    font-weight: 700;
+    user-select: none;
+  }
+  .order-client-items {
+    margin-left: 20px;
+  }
+  .order-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 14px;
+  }
+  .order-item span {
+    flex-grow: 1;
+  }
+  .order-item-qty {
+    width: 60px;
+    text-align: right;
+  }
+  .order-client-actions {
+    margin-left: auto;
+  }
+  .order-client-actions button {
+    background: #f44336;
+    font-size: 13px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .order-client-actions button:hover {
+    background: #d32f2f;
+  }
+
+  /* Кнопки анализа и экспорта */
+  #analysisBtn, #exportExcelBtn {
+    margin-right: 12px;
+  }
+
+  /* Модальное окно анализа */
+  #analysisModal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+  #analysisModal.active {
+    display: flex;
+  }
+  #analysisContent {
+    background: white;
+    padding: 24px 32px;
+    border-radius: 10px;
+    max-width: 400px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  }
+  #analysisContent h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    color: #3f51b5;
+  }
+  #analysisContent p {
+    margin: 10px 0;
+    font-weight: 600;
+    font-size: 16px;
+  }
+  #analysisCloseBtn {
+    margin-top: 20px;
+    background-color: #f44336;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="tabWarehouse" class="active">Склад</button>
+  <button id="tabOrders">Заказы</button>
+</header>
+
+<main>
+  <!-- Склад -->
+  <section id="warehouseSection" class="active">
+    <h2>Управление складом</h2>
+    <form id="addProductForm">
+      <label for="productNameInput">Название продукта</label>
+      <input type="text" id="productNameInput" placeholder="Введите название" required />
+      <label for="productPurchasePriceInput">Цена покупки (KGS)</label>
+      <input type="number" id="productPurchasePriceInput" placeholder="Цена покупки" min="0" step="0.01" required />
+      <label for="productSalePriceInput">Цена продажи (KGS)</label>
+      <input type="number" id="productSalePriceInput" placeholder="Цена продажи" min="0" step="0.01" required />
+      <label for="productQuantityInput">Количество на складе</label>
+      <input type="number" id="productQuantityInput" placeholder="Количество" min="0" step="1" required />
+      <button type="submit">Добавить продукт</button>
+    </form>
+
+    <table id="warehouseTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Название продукта</th>
+          <th>Цена покупки (KGS)</th>
+          <th>Цена продажи (KGS)</th>
+          <th>Количество</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody id="warehouseTbody">
+        <!-- Склад заполнится тут -->
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Заказы -->
+  <section id="ordersSection">
+    <h2>Управление заказами</h2>
+
+    <form id="addOrderForm">
+      <label>Телефон клиента</label>
+      <input type="text" id="orderPhoneInput" placeholder="+996 XXX XX XX XX" pattern="\+?\d{6,15}" required />
+      <label>Адрес клиента</label>
+      <input type="text" id="orderAddressInput" placeholder="Адрес доставки" required />
+
+      <div id="orderItemsContainer">
+        <!-- Товары заказа будут добавляться здесь -->
+      </div>
+      <button type="button" id="addOrderItemBtn" class="btn" style="margin-bottom: 16px;">+ Добавить товар</button>
+
+      <button type="submit" class="btn" style="width: 100%;">Добавить заказ</button>
+    </form>
+
+    <div style="margin-top: 30px; display:flex; align-items:center; gap:10px; flex-wrap: wrap;">
+      <input type="text" id="searchOrdersInput" placeholder="Поиск по адресу или телефону..." style="flex-grow: 1; padding: 10px 14px; border-radius: 6px; border: 1.8px solid #ccc; font-size: 15px;" />
+      <button id="analysisBtn" class="btn">Анализ заказов</button>
+      <button id="exportExcelBtn" class="btn">Экспорт в Excel</button>
+      <button id="clearTodayOrdersBtn" class="btn btn-danger">Очистить сегодняшние заказы</button>
+    </div>
+
+    <div id="ordersList" style="margin-top: 20px;">
+      <!-- Заказы будут отрисовываться тут -->
+    </div>
+  </section>
+</main>
+
+<!-- Модальное окно анализа -->
+<div id="analysisModal" role="dialog" aria-modal="true" aria-labelledby="analysisTitle">
+  <div id="analysisContent">
+    <h3 id="analysisTitle">Анализ заказов</h3>
+    <p id="totalOrdersP"></p>
+    <p id="totalRevenueP"></p>
+    <p id="totalProfitP"></p>
+    <p id="totalCourierP"></p>
+    <p id="totalNetProfitP"></p>
+    <button id="analysisCloseBtn" class="btn">Закрыть</button>
+  </div>
+</div>
+
+
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+
+<script>
+  // Переключение вкладок
+  const tabWarehouse = document.getElementById('tabWarehouse');
+  const tabOrders = document.getElementById('tabOrders');
+  const warehouseSection = document.getElementById('warehouseSection');
+  const ordersSection = document.getElementById('ordersSection');
+
+  tabWarehouse.onclick = () => {
+    tabWarehouse.classList.add('active');
+    tabOrders.classList.remove('active');
+    warehouseSection.classList.add('active');
+    ordersSection.classList.remove('active');
+  };
+  tabOrders.onclick = () => {
+    tabOrders.classList.add('active');
+    tabWarehouse.classList.remove('active');
+    ordersSection.classList.add('active');
+    warehouseSection.classList.remove('active');
+  };
+
+  // Локальное хранилище ключи
+  const STORAGE_PRODUCTS = 'warehouseProducts';
+  const STORAGE_ORDERS = 'clientOrders';
+  const STORAGE_LAST_CLEAN_DATE = 'lastCleanOrdersDate'; // для очистки заказов
+
+  // Элементы склада
+  const addProductForm = document.getElementById('addProductForm');
+  const productNameInput = document.getElementById('productNameInput');
+  const productPurchasePriceInput = document.getElementById('productPurchasePriceInput');
+  const productSalePriceInput = document.getElementById('productSalePriceInput');
+  const productQuantityInput = document.getElementById('productQuantityInput');
+  const warehouseTbody = document.getElementById('warehouseTbody');
+
+  // Элементы заказов
+  const addOrderForm = document.getElementById('addOrderForm');
+  const orderPhoneInput = document.getElementById('orderPhoneInput');
+  const orderAddressInput = document.getElementById('orderAddressInput');
+  const orderItemsContainer = document.getElementById('orderItemsContainer');
+  const addOrderItemBtn = document.getElementById('addOrderItemBtn');
+  const ordersList = document.getElementById('ordersList');
+  const searchOrdersInput = document.getElementById('searchOrdersInput');
+
+  // Модалка анализа
+  const analysisBtn = document.getElementById('analysisBtn');
+  const analysisModal = document.getElementById('analysisModal');
+  const analysisCloseBtn = document.getElementById('analysisCloseBtn');
+  const totalOrdersP = document.getElementById('totalOrdersP');
+  const totalProfitP = document.getElementById('totalProfitP');
+  const totalCourierP = document.getElementById('totalCourierP');
+  const totalRevenueP = document.getElementById('totalRevenueP'); // новый элемент для выручки
+  const totalNetProfitP = document.getElementById('totalNetProfitP'); // прибыль после вычета курьера
+
+  // Кнопка экспорта Excel
+  const exportExcelBtn = document.getElementById('exportExcelBtn');
+
+  // Кнопка очистки сегодняшних заказов (добавьте в HTML с id="clearTodayOrdersBtn")
+  const clearTodayOrdersBtn = document.getElementById('clearTodayOrdersBtn');
+
+  let products = [];
+  let orders = [];
+
+  // Получить сегодняшнюю дату в формате YYYY-MM-DD
+  function getTodayDate() {
+    const d = new Date();
+    return d.toISOString().split('T')[0];
+  }
+
+  // Загрузка из localStorage
+  function loadProducts() {
+    const data = localStorage.getItem(STORAGE_PRODUCTS);
+    products = data ? JSON.parse(data) : [];
+  }
+  function saveProducts() {
+    localStorage.setItem(STORAGE_PRODUCTS, JSON.stringify(products));
+  }
+  function loadOrders() {
+    const data = localStorage.getItem(STORAGE_ORDERS);
+    orders = data ? JSON.parse(data) : [];
+  }
+  function saveOrders() {
+    localStorage.setItem(STORAGE_ORDERS, JSON.stringify(orders));
+  }
+
+  // Отрисовка склада (скрываем товары с quantity = 0)
+  function renderWarehouse() {
+    warehouseTbody.innerHTML = '';
+    const visibleProducts = products.filter(p => p.quantity > 0);
+    if (visibleProducts.length === 0) {
+      warehouseTbody.innerHTML = '<tr class="empty-row"><td colspan="6">Склад пуст</td></tr>';
+      return;
+    }
+    visibleProducts.forEach((p, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${idx + 1}</td>
+        <td>${p.name}</td>
+        <td>${p.purchasePrice.toFixed(2)}</td>
+        <td>${p.salePrice.toFixed(2)}</td>
+        <td>${p.quantity}</td>
+        <td class="actions"><button data-name="${p.name}">Удалить</button></td>
+      `;
+      warehouseTbody.appendChild(tr);
+    });
+
+    // Удаление товара
+    warehouseTbody.querySelectorAll('button').forEach(btn => {
+      btn.onclick = () => {
+        const name = btn.dataset.name;
+        if (confirm(`Удалить товар "${name}"?`)) {
+          const index = products.findIndex(p => p.name === name);
+          if(index !== -1){
+            products.splice(index,1);
+            saveProducts();
+            renderWarehouse();
+            renderOrderProductSelectors();
+          }
+        }
+      };
+    });
+  }
+
+  // Добавление или обновление товара
+  addProductForm.onsubmit = e => {
+    e.preventDefault();
+    const name = productNameInput.value.trim();
+    const purchasePrice = parseFloat(productPurchasePriceInput.value);
+    const salePrice = parseFloat(productSalePriceInput.value);
+    const quantity = parseInt(productQuantityInput.value, 10);
+
+    if (!name || purchasePrice < 0 || salePrice < 0 || quantity < 0) {
+      alert('Заполните корректно все поля!');
+      return;
+    }
+
+    // Проверим, есть ли такой товар — обновим количество и цены
+    const existing = products.find(p => p.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      existing.purchasePrice = purchasePrice;
+      existing.salePrice = salePrice;
+      existing.quantity += quantity; // добавляем количество
+    } else {
+      products.push({name, purchasePrice, salePrice, quantity});
+    }
+    saveProducts();
+    renderWarehouse();
+    renderOrderProductSelectors();
+    addProductForm.reset();
+  };
+
+  // Отрисовка селектов товаров в заказах (скрываем товары с quantity=0)
+  function renderOrderProductSelectors() {
+    orderItemsContainer.innerHTML = '';
+    addOrderItem();
+  }
+
+  // Добавить блок выбора товара в форму заказа
+  function addOrderItem() {
+    const availableProducts = products.filter(p => p.quantity > 0);
+    if(availableProducts.length === 0) {
+      orderItemsContainer.innerHTML = '<p>Нет товаров на складе с доступным количеством. Добавьте или пополните товары.</p>';
+      return;
+    }
+    const div = document.createElement('div');
+    div.className = 'order-item-block';
+
+    const select = document.createElement('select');
+    availableProducts.forEach(p => {
+      const option = document.createElement('option');
+      option.value = p.name;
+      option.textContent = `${p.name} (доступно: ${p.quantity})`;
+      select.appendChild(option);
+    });
+
+    const qtyInput = document.createElement('input');
+    qtyInput.type = 'number';
+    qtyInput.min = '1';
+    qtyInput.step = '1';
+    qtyInput.value = '1';
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.textContent = '×';
+    removeBtn.className = 'removeItemBtn';
+    removeBtn.title = 'Удалить этот товар';
+    removeBtn.onclick = () => {
+      div.remove();
+    };
+
+    div.appendChild(select);
+    div.appendChild(qtyInput);
+    div.appendChild(removeBtn);
+    orderItemsContainer.appendChild(div);
+  }
+
+  addOrderItemBtn.onclick = () => {
+    addOrderItem();
+  };
+
+  // Очистить форму заказа
+  function clearOrderForm() {
+    orderPhoneInput.value = '';
+    orderAddressInput.value = '';
+    orderItemsContainer.innerHTML = '';
+    addOrderItem();
+  }
+
+  // Отрисовка заказов с поиском
+  function renderOrders(search = '') {
+    ordersList.innerHTML = '';
+    const filtered = orders.filter(o => 
+      o.phone.toLowerCase().includes(search.toLowerCase()) || 
+      o.address.toLowerCase().includes(search.toLowerCase())
+    );
+
+    if (filtered.length === 0) {
+      ordersList.innerHTML = '<p class="no-orders-msg">Заказы не найдены.</p>';
+      return;
+    }
+
+    filtered.forEach((order, idx) => {
+      const div = document.createElement('div');
+      div.className = 'order-client';
+      if(order.packed) div.classList.add('packed');
+
+      // Индекс в общем orders нужен, а не filtered, для удаления — найдём оригинальный индекс
+      const origIndex = orders.indexOf(order);
+
+      div.innerHTML = `
+        <div class="order-header">
+          <span>Клиент #${origIndex + 1}</span>
+          <span>Телефон: ${order.phone}</span>
+          <span>Адрес: ${order.address}</span>
+          <label>
+            Упакован 
+            <input type="checkbox" class="packedCheckbox" data-index="${origIndex}" ${order.packed ? 'checked' : ''}>
+          </label>
+          <button class="deleteOrderBtn" data-index="${origIndex}" title="Удалить заказ">🗑️</button>
+        </div>
+        <ul>
+          ${order.items.map(item => {
+            const product = products.find(p => p.name === item.name);
+            const purchasePrice = product ? product.purchasePrice : 0;
+            const salePrice = product ? product.salePrice : 0;
+            return `<li>${item.name} — Кол-во: ${item.quantity} — Цена продажи: ${salePrice.toFixed(2)}</li>`;
+          }).join('')}
+        </ul>
+      `;
+
+      ordersList.appendChild(div);
+    });
+
+    // Обработчики чекбоксов упакованности
+    ordersList.querySelectorAll('.packedCheckbox').forEach(chk => {
+      chk.onchange = e => {
+        const idx = +chk.dataset.index;
+        orders[idx].packed = chk.checked;
+        saveOrders();
+        renderOrders(searchOrdersInput.value);
+      };
+    });
+
+    // Обработчик удаления заказа
+    ordersList.querySelectorAll('.deleteOrderBtn').forEach(btn => {
+      btn.onclick = e => {
+        const idx = +btn.dataset.index;
+        if(confirm('Удалить этот заказ? Количество товаров вернётся на склад.')){
+          // Вернуть товары на склад
+          orders[idx].items.forEach(item => {
+            const product = products.find(p => p.name === item.name);
+            if(product){
+              product.quantity += item.quantity;
+            }
+          });
+          orders.splice(idx, 1);
+          saveOrders();
+          saveProducts();
+          renderOrders(searchOrdersInput.value);
+          renderWarehouse();
+          renderOrderProductSelectors();
+        }
+      };
+    });
+  }
+
+  // Добавление заказа
+  addOrderForm.onsubmit = e => {
+    e.preventDefault();
+
+    const phone = orderPhoneInput.value.trim();
+    const address = orderAddressInput.value.trim();
+
+    if (!phone || !address) {
+      alert('Введите телефон и адрес клиента!');
+      return;
+    }
+
+    // Собираем товары заказа
+    const items = [];
+    const selects = orderItemsContainer.querySelectorAll('select');
+    const qtys = orderItemsContainer.querySelectorAll('input[type=number]');
+    for(let i=0; i<selects.length; i++){
+      const name = selects[i].value;
+      const qty = parseInt(qtys[i].value, 10);
+      if(qty <= 0){
+        alert('Количество товара должно быть больше 0');
+        return;
+      }
+      // Проверяем наличие на складе
+      const product = products.find(p => p.name === name);
+      if(!product || product.quantity < qty){
+        alert(`Недостаточно товара "${name}" на складе!`);
+        return;
+      }
+      items.push({name, quantity: qty});
+    }
+    if(items.length === 0){
+      alert('Добавьте хотя бы один товар для заказа!');
+      return;
+    }
+
+    // Вычитаем количество со склада
+    items.forEach(item => {
+      const product = products.find(p => p.name === item.name);
+      product.quantity -= item.quantity;
+    });
+
+    // Создаем заказ
+    orders.push({
+      phone,
+      address,
+      items,
+      packed: false,
+      date: getTodayDate(),
+    });
+
+    saveOrders();
+    saveProducts();
+
+    clearOrderForm();
+    renderWarehouse();
+    renderOrders();
+    renderOrderProductSelectors();
+  };
+
+  // Поиск по заказам
+  searchOrdersInput.oninput = () => {
+    renderOrders(searchOrdersInput.value);
+  };
+
+  // Очистка сегодняшних заказов (без возврата товаров)
+  clearTodayOrdersBtn.onclick = () => {
+    const today = getTodayDate();
+    if(confirm('Удалить все сегодняшние заказы? Товары не будут возвращены на склад.')){
+      orders = orders.filter(o => o.date !== today);
+      saveOrders();
+      renderOrders(searchOrdersInput.value);
+    }
+  };
+
+  // Анализ заказов
+  analysisBtn.onclick = () => {
+    if(orders.length === 0){
+      alert('Нет заказов для анализа.');
+      return;
+    }
+
+    // Общие показатели
+    let totalOrders = orders.length;
+    let totalRevenue = 0; // выручка (продажная цена * количество)
+    let totalPurchaseCost = 0; // закупочная стоимость (закупка * количество)
+    let courierFeePerClient = 150;
+    let totalCourierFee = courierFeePerClient * totalOrders;
+
+    orders.forEach(order => {
+      order.items.forEach(item => {
+        const product = products.find(p => p.name === item.name);
+        if(product){
+          totalRevenue += product.salePrice * item.quantity;
+          totalPurchaseCost += product.purchasePrice * item.quantity;
+        }
+      });
+    });
+
+    let totalProfit = totalRevenue - totalPurchaseCost;
+    let netProfitAfterCourier = totalProfit - totalCourierFee;
+
+    // Обновление текста модалки
+    totalOrdersP.textContent = `Общее количество заказов: ${totalOrders}`;
+    totalRevenueP.textContent = `Общая выручка (с продаж): ${totalRevenue.toFixed(2)} KGS`;
+    totalProfitP.textContent = `Чистая прибыль (выручка - закупка): ${totalProfit.toFixed(2)} KGS`;
+    totalCourierP.textContent = `Курьерская прибыль (150 KGS × заказов): ${totalCourierFee} KGS`;
+    totalNetProfitP.textContent = `Чистая прибыль после вычета курьера: ${netProfitAfterCourier.toFixed(2)} KGS`;
+
+    analysisModal.style.display = 'block';
+  };
+
+  analysisCloseBtn.onclick = () => {
+    analysisModal.style.display = 'none';
+  };
+
+  // Закрытие модалки по клику вне окна
+  window.onclick = e => {
+    if (e.target == analysisModal) {
+      analysisModal.style.display = 'none';
+    }
+  };
+
+  // Экспорт в Excel (пример простой csv-экспорт)
+  exportExcelBtn.onclick = () => {
+  if (orders.length === 0) {
+    alert('Нет заказов для экспорта.');
+    return;
+  }
+
+  // Формируем данные для Excel
+  let data = [];
+  data.push(['Клиент', 'Телефон', 'Адрес', 'Товар', 'Количество', 'Цена продажи']);
+  
+  orders.forEach((order, idx) => {
+    order.items.forEach(item => {
+      const product = products.find(p => p.name === item.name);
+      const salePrice = product ? product.salePrice : 0;
+      data.push([
+        `Клиент #${idx + 1}`,
+        order.phone,
+        order.address,
+        item.name,
+        item.quantity,
+        salePrice
+      ]);
+    });
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, ws, 'Заказы');
+  XLSX.writeFile(wb, 'orders.xlsx');
+};
+
+
+  // Инициализация
+  function init() {
+    loadProducts();
+    loadOrders();
+    renderWarehouse();
+    renderOrders();
+    renderOrderProductSelectors();
+  }
+
+  init();
+</script>
+</body>
+</html>
