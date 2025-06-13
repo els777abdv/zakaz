@@ -749,13 +749,13 @@
 
   // Очистка сегодняшних заказов (без возврата товаров)
   clearTodayOrdersBtn.onclick = () => {
-    const today = getTodayDate();
-    if(confirm('Удалить все сегодняшние заказы? Товары не будут возвращены на склад.')){
-      orders = orders.filter(o => o.date !== today);
-      saveOrders();
-      renderOrders(searchOrdersInput.value);
-    }
-  };
+  if (confirm('Удалить все заказы? Товары не будут возвращены на склад.')) {
+    orders = [];
+    saveOrders();
+    renderOrders(searchOrdersInput.value);
+  }
+};
+
 
   // Анализ заказов
   analysisBtn.onclick = () => {
